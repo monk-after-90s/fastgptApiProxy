@@ -1,7 +1,4 @@
 import os
-import pprint
-import secrets
-import string
 from typing import AsyncGenerator, Dict
 from urllib.parse import urljoin
 import httpx
@@ -31,10 +28,27 @@ async def modify_openai_response(data: Dict, method: str = "POST", path: str = "
         async for chat_completion in _request_openai(data, method, path, channel):
             chat_completion = chat_completion.to_dict()
             # 代理fastgpt可能的bug
-            if "choices" in chat_completion and chat_completion["choices"][0]['message']['content'].startswith("0: "):
+            if "choices" in chat_completion and \
+                    isinstance(chat_completion["choices"][0]['message']['content'], str) and \
+                    chat_completion["choices"][0]['message']['content'].startswith("0: "):
                 chat_completion["choices"][0]['message']['content'] = \
                     chat_completion["choices"][0]['message']['content'][3:]
-                return chat_completion
+            elif "choices" in chat_completion and \
+                    isinstance(chat_completion["choices"][0]['message']['content'], list):
+                # fastgpt的工具调用返回
+                types = set()
+                text = ''
+                for content in chat_completion["choices"][0]['message']['content']:
+                    if isinstance(content, dict):
+                        types.add(content.get("type"))
+                        if content.get("type") == 'text':
+                            text = \
+                                content['text']['content'] if not content['text']['content'].startswith("0: ") else \
+                                    content['text']['content'][3:]
+                if types == {"text", "tool"}:
+                    chat_completion["choices"][0]['message']['content'] = text
+
+            return chat_completion
     else:
         raise NotImplementedError
 
