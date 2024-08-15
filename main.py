@@ -51,7 +51,9 @@ async def proxy_middleware(request: Request, call_next):
     parsed_url = urlparse(url)
     host = parsed_url.netloc
     headers["host"] = headers["x-forwarded-host"] = host
-
+    # 获取OPENAI_API_KEY存进环境变量
+    assert 'authorization' in headers and headers['authorization'].startswith("Bearer ")
+    os.environ['OPENAI_API_KEY'] = headers['authorization'].split(' ')[1]
     if method == "POST" and "/v1/chat/completions" == request.url.path:
         data = await request.json()
         logger.debug(f"{data=}")

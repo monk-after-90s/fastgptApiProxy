@@ -13,12 +13,12 @@ pip install -r requirements.txt
 ## Run
 
 ```bash
-OPENAI_API_KEY={OPENAI_API_KEY} OPENAI_BASE_URL={OPENAI_BASE_URL} uvicorn main:app [--workers {worker_num}] [--port {port}]
+OPENAI_BASE_URL={OPENAI_BASE_URL} uvicorn main:app [--workers {worker_num}] [--port {port}]
 ```
 
-The `OPENAI_API_KEY` and `OPENAI_BASE_URL` are the environment variables for the OpenAI compatible API key and base URL(
+`OPENAI_BASE_URL` is the environment variable for the OpenAI compatible base URL(
 end with `/v1`)
-of the LLM. worker_num is the number of workers, port is the port of the server. worker_num and port are optional.
+of fastgpt server. worker_num is the number of workers, port is the port of the server. worker_num and port are optional.
 
 The API served by this project is compatible with the OpenAI API.
 
