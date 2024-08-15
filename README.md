@@ -1,6 +1,6 @@
 # fastgptApiProxy
 
-代理fastgpt的agent Api，解决fastgpt的API有时候的数据格式不规范的问题，特别是对接了chatgpt-on-wechat。
+代理fastgpt的agent Api，二次处理响应数据，以兼容下游客户端，特别是对接了chatgpt-on-wechat。
 
 ## Install
 
@@ -18,7 +18,8 @@ OPENAI_BASE_URL={OPENAI_BASE_URL} uvicorn main:app [--workers {worker_num}] [--p
 
 `OPENAI_BASE_URL` is the environment variable for the OpenAI compatible base URL(
 end with `/v1`)
-of fastgpt server. worker_num is the number of workers, port is the port of the server. worker_num and port are optional.
+of fastgpt server. worker_num is the number of workers, port is the port of the server. worker_num and port are
+optional.
 
 The API served by this project is compatible with the OpenAI API.
 
