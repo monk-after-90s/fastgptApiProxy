@@ -49,7 +49,7 @@ async def modify_openai_response(data: Dict, method: str = "POST", path: str = "
                     chat_completion["choices"][0]['message']['content'] = text
 
             return chat_completion
-    else:
+    else:  # todo 实现流式响应
         raise NotImplementedError
 
 
