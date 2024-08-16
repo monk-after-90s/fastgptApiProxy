@@ -139,6 +139,7 @@ async def _request_openai(data: Dict,
     elif channel == "openai" and path == "/v1/chat/completions":
         client = client or AsyncOpenAI(api_key=OPENAI_API_KEY)
 
+        logger.info(f"{client.api_key=}")
         if not data.get("stream"):
             yield await client.chat.completions.create(**data)
             return
