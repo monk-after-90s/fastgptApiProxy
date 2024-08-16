@@ -7,7 +7,6 @@ from loguru import logger
 from urllib.parse import urlparse
 from openai import AsyncOpenAI
 
-API_KEY = os.environ.get("OPENAI_API_KEY")
 # 解析出host
 parsed_url = urlparse(os.environ['OPENAI_BASE_URL'])
 BASE_URL = f"{parsed_url.scheme}://{parsed_url.netloc}"
@@ -17,7 +16,8 @@ TIMEOUT = 30
 client: None | AsyncOpenAI = None
 
 
-async def modify_openai_response(data: Dict, method: str = "POST", path: str = "", channel: str = "openai") \
+async def modify_openai_response(data: Dict, method: str = "POST", path: str = "",
+                                 channel: str = "openai", OPENAI_API_KEY: str = '') \
         -> AsyncGenerator[str, None] | Dict:
     """
     根据是否流式选择处理路线，以及对响应结果的转换
@@ -25,7 +25,7 @@ async def modify_openai_response(data: Dict, method: str = "POST", path: str = "
     :param data: 请求体
     """
     if not data.get("stream"):
-        async for chat_completion in _request_openai(data, method, path, channel):
+        async for chat_completion in _request_openai(data, method, path, channel, OPENAI_API_KEY):
             chat_completion = chat_completion.to_dict()
             # 代理fastgpt可能的bug
             if "choices" in chat_completion and \
@@ -57,6 +57,7 @@ async def _request_openai(data: Dict,
                           method: str = "POST",
                           path: str = "",
                           channel: str = "openai",
+                          OPENAI_API_KEY: str = '',
                           yield_type: str = "str") -> AsyncGenerator[str, None]:
     """
     对OpenAI API兼容的服务进行请求
@@ -119,7 +120,7 @@ async def _request_openai(data: Dict,
                     urljoin(BASE_URL, path),
                     timeout=httpx.Timeout(TIMEOUT),
                     headers={
-                        "Authorization": f"Bearer {API_KEY}",
+                        "Authorization": f"Bearer {OPENAI_API_KEY}",
                     },
                     json=data,
             ) as response:
@@ -136,7 +137,7 @@ async def _request_openai(data: Dict,
                         if c_cache:
                             yield c_cache
     elif channel == "openai" and path == "/v1/chat/completions":
-        client = client or AsyncOpenAI()
+        client = client or AsyncOpenAI(api_key=OPENAI_API_KEY)
 
         if not data.get("stream"):
             yield await client.chat.completions.create(**data)

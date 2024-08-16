@@ -51,14 +51,15 @@ async def proxy_middleware(request: Request, call_next):
     parsed_url = urlparse(url)
     host = parsed_url.netloc
     headers["host"] = headers["x-forwarded-host"] = host
-    # 获取OPENAI_API_KEY存进环境变量
+    # 获取OPENAI_API_KEY
     assert 'authorization' in headers and headers['authorization'].startswith("Bearer ")
-    os.environ['OPENAI_API_KEY'] = headers['authorization'].split(' ')[1]
+    OPENAI_API_KEY = headers['authorization'].split(' ')[1]
     if method == "POST" and "/v1/chat/completions" == request.url.path:
         data = await request.json()
         logger.debug(f"{data=}")
 
-        stream_gen = await modify_openai_response(data=data, path=request.url.path, channel="openai")
+        stream_gen = await modify_openai_response(data=data, path=request.url.path,
+                                                  channel="openai", OPENAI_API_KEY=OPENAI_API_KEY)
 
         if data.get("stream", False):
             resp = StreamingResponse(stream_gen, media_type="text/event-stream")
@@ -75,7 +76,8 @@ async def proxy_middleware(request: Request, call_next):
         logger.debug(f"{data=}")
 
         resp = StreamingResponse(
-            modify_openai_response(data=data, method=method, path=request.url.path, channel="httpx"),
+            modify_openai_response(data=data, method=method, path=request.url.path, channel="httpx",
+                                   OPENAI_API_KEY=OPENAI_API_KEY),
             media_type="text/event-stream")
         resp.headers["Access-Control-Allow-Origin"] = "*"
 
