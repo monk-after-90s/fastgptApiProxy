@@ -13,8 +13,6 @@ BASE_URL = f"{parsed_url.scheme}://{parsed_url.netloc}"
 
 TIMEOUT = 30
 
-client: None | AsyncOpenAI = None
-
 
 async def modify_openai_response(data: Dict, method: str = "POST", path: str = "",
                                  channel: str = "openai", OPENAI_API_KEY: str = '') \
@@ -73,8 +71,6 @@ async def _request_openai(data: Dict,
     """
     if method != "POST":
         raise NotImplementedError
-
-    global client
 
     if data['messages'][-1].get('role') == 'tool' and 'name' in data['messages'][-1].keys():  # 工具调用结果汇总
         # 清理'assistant'的tool_calls
@@ -137,23 +133,26 @@ async def _request_openai(data: Dict,
                         if c_cache:
                             yield c_cache
     elif channel == "openai" and path == "/v1/chat/completions":
-        client = client or AsyncOpenAI(api_key=OPENAI_API_KEY)
+        client = AsyncOpenAI(api_key=OPENAI_API_KEY)
 
-        logger.info(f"{client.api_key=}")
-        if not data.get("stream"):
-            yield await client.chat.completions.create(**data)
-            return
+        try:
+            logger.info(f"{client.api_key=}")
+            if not data.get("stream"):
+                yield await client.chat.completions.create(**data)
+                return
 
-        stream = await client.chat.completions.create(**data)
-        async for chunk in stream:
-            if yield_type == "str":
-                chunk_s = "data: " + ujson.dumps(chunk.to_dict(), ensure_ascii=False) + "\n\n"
-                logger.debug(f"{chunk_s=}")
-                yield chunk_s
-            elif yield_type == "dict":
-                yield chunk.to_dict()
-            else:
-                raise NotImplementedError
+            stream = await client.chat.completions.create(**data)
+            async for chunk in stream:
+                if yield_type == "str":
+                    chunk_s = "data: " + ujson.dumps(chunk.to_dict(), ensure_ascii=False) + "\n\n"
+                    logger.debug(f"{chunk_s=}")
+                    yield chunk_s
+                elif yield_type == "dict":
+                    yield chunk.to_dict()
+                else:
+                    raise NotImplementedError
+        finally:
+            await client.close()
 
     else:
         raise NotImplementedError
