@@ -23,6 +23,10 @@ optional.
 
 The API served by this project is compatible with the OpenAI API.
 
+## Tdlt
+
+- [ ] 使用chatgpt-on-wechat插件实现
+
 ## Citation
 
 ```citation
